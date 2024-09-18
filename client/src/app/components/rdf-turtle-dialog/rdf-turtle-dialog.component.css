@@ -1,0 +1,22 @@
+pre {
+    white-space: pre-wrap; /* Allow wrapping of long lines */
+    word-wrap: break-word; /* Ensure links are properly broken */
+  }
+  
+  .code {
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    overflow: auto;
+  }
+  
+  .close-button {
+    background-color: #f44336; /* Red color for close button */
+    color: white;
+    font-weight: bold;
+  }
+  
+  .close-button:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+  }
+  

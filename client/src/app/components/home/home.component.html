@@ -1,0 +1,97 @@
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+/>
+<div class="container">
+  <!-- Progress Spinner while Loading movies -->
+  <div *ngIf="isPageLoading" class="progress-spinner-container">
+    <div class="spinner-content">
+      <mat-spinner class="custom-spinner"></mat-spinner>
+      <p class="loading-text">Loading movies...</p>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filters" *ngIf="showFilters">
+    <div class="dropdowns-container">
+      <div class="dropdown">
+        <label>
+          <input type="checkbox" [(ngModel)]="sortAndFilterInfo.onlyNewMovies"/>
+          Only New Movies
+        </label>
+      </div>
+
+      <div class="dropdown">
+        <button class="dropdown-btn">Actors</button>
+        <div class="dropdown-content">
+          <label *ngFor="let actor of actors" class="dropdown-item">
+            <input
+              type="checkbox"
+              [value]="actor.name"
+              (change)="onActorChange($event)"
+            />
+            {{ actor.name }}
+          </label>
+        </div>
+      </div>
+
+      <button (click)="applyFilters()" class="filter-btn">Apply Filters</button>
+    </div>
+    <div class="sorting-section">
+      <div class="sort-label">Sort by:</div>
+      <div class="sort-controls">
+        <select
+          [(ngModel)]="sortAndFilterInfo.sortType"
+          (ngModelChange)="applyFilters()"
+          class="sort-combobox"
+        >
+          <option value="year">Year</option>
+          <option value="title">Title</option>
+        </select>
+
+        <button class="sort-order-button" (click)="toggleSortOrder()">
+          <i *ngIf="sortAndFilterInfo.isAscendantOrder" class="fas fa-arrow-up"></i>
+          <i *ngIf="!sortAndFilterInfo.isAscendantOrder" class="fas fa-arrow-down"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Spinner while Applying Filters -->
+  <div *ngIf="applyingFilters" class="progress-spinner">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <div
+    class="no-movies"
+    *ngIf="movies.length === 0 && !isPageLoading && !applyingFilters"
+  >
+    <p>No movies available at the moment. Please try again later or adjust your filters.</p>
+  </div>
+
+  <div class="movie-cards" *ngIf="movies.length > 0">
+    <div *ngFor="let movie of movies" class="movie-card">
+      <div class="movie-info">
+        <!-- Clickable movie title that opens the movie URL in a new tab -->
+        <h3>
+          <a [href]="movie.url" target="_blank" rel="noopener noreferrer">{{ movie.name }}</a>
+        </h3>
+        <p>{{ movie.description }}</p>
+        <p><strong>Year:</strong> {{ movie.year }}</p>
+      </div>
+
+      <div class="movie-image" (click)="openRdfTurtleDialog(movie)">
+        <img alt="Movie IMG" [src]="movie.imgSrc"/>
+      </div>
+
+      <div *ngIf="movie.actors.length > 0" class="actors-list">
+        <h4>Actors</h4>
+        <ul>
+          <li *ngFor="let actor of movie.actors">
+            {{ actor.name }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
