@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { UserService } from '../../services/user.service';
-import { User } from '../../types/user';
-import { Actor } from 'src/app/types/actor';
-import { FilterAndSortEventsInfo } from 'src/app/types/filter-sort-events-info';
-import { Movie } from 'src/app/types/movie';
-import { MoviesService } from 'src/app/services/movies.service';
-import { RdfTurtleDialogComponent } from '../rdf-turtle-dialog/rdf-turtle-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
+import {Component, OnInit} from '@angular/core';
+import {UserService} from '../../services/user.service';
+import {UserDto} from '../../dtos/user.dto';
+import {ActorDto} from 'src/app/dtos/actor.dto';
+import {FilterAndSortEventsInfo} from 'src/app/dtos/filter-sort-events-info.dto';
+import {MovieDto} from 'src/app/dtos/movie.dto';
+import {MoviesService} from 'src/app/services/movies.service';
+import {RdfTurtleDialogComponent} from '../rdf-turtle-dialog/rdf-turtle-dialog.component';
+import {MatDialog} from '@angular/material/dialog';
 
 @Component({
   selector: 'app-home',
@@ -14,21 +14,22 @@ import { MatDialog } from '@angular/material/dialog';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  user!: User;
-  movies: Movie[] = [];
-  actors: Actor[] = [];
-  selectedActors: Actor[] = [];
+  user!: UserDto;
+  movies: MovieDto[] = [];
+  actors: ActorDto[] = [];
+  selectedActors: ActorDto[] = [];
   sortAndFilterInfo: FilterAndSortEventsInfo = new FilterAndSortEventsInfo();
   isPageLoading: boolean = false;
   applyingFilters: boolean = false;
-  showFilters : boolean = false;
+  showFilters: boolean = false;
 
-  constructor(private userService: UserService, private moviesService: MoviesService, private dialog: MatDialog)  { }
+  constructor(private userService: UserService, private moviesService: MoviesService, private dialog: MatDialog) {
+  }
 
   ngOnInit(): void {
     this.isPageLoading = true;
     this.moviesService.init("https://www.netflix.com/ro/browse/genre/34399", 12).subscribe({
-      next: data => {
+      next: () => {
         this.isPageLoading = false;
         this.sortAndFilterInfo.isAscendantOrder = true;
         this.sortAndFilterInfo.onlyNewMovies = false;
@@ -56,7 +57,7 @@ export class HomeComponent implements OnInit {
   openRdfTurtleDialog(movie: any) {
     const rdfTurtle = this.getRdfTurtleForMovie(movie); // Implement this method to fetch the RDF Turtle
     this.dialog.open(RdfTurtleDialogComponent, {
-      data: { rdfTurtle },
+      data: {rdfTurtle},
       width: '80%',
       height: '80%'
     });
@@ -72,24 +73,24 @@ export class HomeComponent implements OnInit {
     this.sortAndFilterInfo.actors = this.selectedActors.map(act => act.name);
 
     this.moviesService.getMovies(this.sortAndFilterInfo)
-        .subscribe({
-          next: movies => {
-            this.movies = movies;
-            this.applyingFilters = false;
-          },
-          error: err => {
-            console.log(err);
-            this.applyingFilters = false;
-          }
-        });
+      .subscribe({
+        next: movies => {
+          this.movies = movies;
+          this.applyingFilters = false;
+        },
+        error: err => {
+          console.log(err);
+          this.applyingFilters = false;
+        }
+      });
   }
 
-  compareActors(a1: Actor, a2: Actor): boolean {
+  compareActors(a1: ActorDto, a2: ActorDto): boolean {
     return a1.name === a2.name;
   }
 
-  extractUniqueActors(actors: Actor[]): Actor[] {
-    const uniqueActors: Actor[] = [];
+  extractUniqueActors(actors: ActorDto[]): ActorDto[] {
+    const uniqueActors: ActorDto[] = [];
     actors.forEach(actor => {
       if (!uniqueActors.some(act => this.compareActors(act, actor))) {
         uniqueActors.push(actor);
@@ -110,7 +111,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  toggleSortOrder() :void {
+  toggleSortOrder(): void {
     this.sortAndFilterInfo.isAscendantOrder = !this.sortAndFilterInfo.isAscendantOrder;
     this.applyFilters();
   }

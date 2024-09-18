@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { StorageService } from '../../services/storage.service';
 import { UserService } from '../../services/user.service';
-import { User } from '../../types/user';
+import { UserDto } from '../../dtos/user.dto';
 
 @Component({
   selector: 'app-profile',
@@ -9,7 +9,7 @@ import { User } from '../../types/user';
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
-  user: User = new User();
+  user: UserDto = new UserDto();
   shouldDisplayUniversity! : boolean;
 
   constructor(private userService: UserService) { }
@@ -17,7 +17,7 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.userService.getProfile().subscribe({
       next: data => {
-        this.user = JSON.parse(JSON.stringify(data)) as User;
+        this.user = JSON.parse(JSON.stringify(data)) as UserDto;
         this.shouldDisplayUniversity = this.user.role === 'Role_Administrator';
       },
       error: err => {console.log(err)

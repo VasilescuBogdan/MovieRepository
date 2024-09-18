@@ -1,8 +1,8 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { FilterAndSortEventsInfo } from '../types/filter-sort-events-info';
-import { Movie } from '../types/movie';
+import { FilterAndSortEventsInfo } from '../dtos/filter-sort-events-info.dto';
+import { MovieDto } from '../dtos/movie.dto';
 
 const API_URL = 'http://localhost:8080/api/v1/movies';
 
@@ -28,12 +28,12 @@ export class MoviesService {
   }
 
 
-  getMovies(filterAndSortEventsInfo: FilterAndSortEventsInfo): Observable<Movie[]> {
+  getMovies(filterAndSortEventsInfo: FilterAndSortEventsInfo): Observable<MovieDto[]> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
-    return this.http.post<Movie[]>(API_URL, filterAndSortEventsInfo, {headers: headers});
+    return this.http.post<MovieDto[]>(API_URL, filterAndSortEventsInfo, {headers: headers});
   }
 
 }

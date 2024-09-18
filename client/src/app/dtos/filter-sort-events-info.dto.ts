@@ -1,4 +1,4 @@
-import { Actor } from "./actor";
+import { ActorDto } from "./actor.dto";
 
 
 export class FilterAndSortEventsInfo {

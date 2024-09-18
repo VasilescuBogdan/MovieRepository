@@ -2,7 +2,7 @@ package com.ucv.ace.controllers;
 
 import com.ucv.ace.dto.FilterAndSortingInfo;
 import com.ucv.ace.services.MoviesService;
-import com.ucv.ace.types.Movie;
+import com.ucv.ace.model.Movie;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.jena.rdf.model.Model;

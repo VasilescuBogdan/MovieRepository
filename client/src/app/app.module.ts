@@ -19,6 +19,7 @@ import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { QuillModule } from 'ngx-quill';
 import { RdfTurtleDialogComponent } from './components/rdf-turtle-dialog/rdf-turtle-dialog.component';
+import {MatButtonModule} from "@angular/material/button";
 
 @NgModule({
   declarations: [
@@ -40,7 +41,8 @@ import { RdfTurtleDialogComponent } from './components/rdf-turtle-dialog/rdf-tur
     MatInputModule,
     BrowserAnimationsModule,
     MatProgressSpinnerModule,
-    QuillModule
+    QuillModule,
+    MatButtonModule
   ],
   providers: [httpInterceptorProviders],
   bootstrap: [AppComponent]

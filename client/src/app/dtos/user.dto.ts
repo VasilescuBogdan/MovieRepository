@@ -1,4 +1,4 @@
-export class User {
+export class UserDto {
     firstName : string = '';
     secondName: string = '';
     university: string = '';

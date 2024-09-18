@@ -1,6 +1,6 @@
-import { Actor } from "./actor";
+import { ActorDto } from "./actor.dto";
 
-export class Movie {
+export class MovieDto {
     name : string = '';
     year: number = 0;
     imgSrc : string = "";
@@ -8,7 +8,7 @@ export class Movie {
     genre : string = "";
     rdfTurtle : string = "";
     url : string = "";
-    actors : Actor[] = [];
+    actors : ActorDto[] = [];
 
     constructor(data?: any) {
         Object.assign(this, data);

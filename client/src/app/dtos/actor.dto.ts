@@ -1,4 +1,4 @@
-export class Actor {
+export class ActorDto {
     name : string = '';
 
     constructor(data?: any) {
