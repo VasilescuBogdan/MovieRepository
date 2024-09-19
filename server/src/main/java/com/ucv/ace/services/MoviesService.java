@@ -71,7 +71,7 @@ public class MoviesService {
         List<Movie> movies = new ArrayList<>();
         String currentYear = String.valueOf(Year.now()
                                                 .getValue());
-        String sortBy = currentYear.equalsIgnoreCase(sortingDetails) ? "releaseYear" : "movieName";
+        String sortBy = sortingDetails.equals("year") ? "releaseYear" : "movieName";
         String sortOrder = isAscending ? "ASC" : "DESC";
 
         StringBuilder sparqlQueryBuilder = createBaseQuery();
@@ -88,16 +88,16 @@ public class MoviesService {
         return movies;
     }
 
-    private static StringBuilder createBaseQuery() {
+    private StringBuilder createBaseQuery() {
         StringBuilder sparqlQueryBuilder = new StringBuilder();
         sparqlQueryBuilder.append(
                 "PREFIX schema: <http://schema.org/> " + "PREFIX foaf: <http://xmlns.com/foaf/0.1/> " +
                 "SELECT ?movieName ?releaseYear ?description ?genre ?movieUrl (GROUP_CONCAT(DISTINCT ?actorName; " +
-                "SEPARATOR=\", \") AS ?actors) " +
-                "WHERE { " + "  ?movie a schema:Movie ; " + "         schema:name ?movieName ; " +
-                "         schema:datePublished ?releaseYear ; " + "         schema:description ?description ; " +
-                "         schema:genre ?genre ; " + "         schema:url ?movieUrl . " +
-                "  OPTIONAL { " + "    ?movie schema:actor ?actor . " + "    ?actor foaf:name ?actorName . " + "  } ");
+                "SEPARATOR=\", \") AS ?actors) " + "WHERE { " + "  ?movie a schema:Movie ; " +
+                "         schema:name ?movieName ; " + "         schema:datePublished ?releaseYear ; " +
+                "         schema:description ?description ; " + "         schema:genre ?genre ; " +
+                "         schema:url ?movieUrl . " + "  OPTIONAL { " + "    ?movie schema:actor ?actor . " +
+                "    ?actor foaf:name ?actorName . " + "  } ");
         return sparqlQueryBuilder;
     }
 
@@ -133,14 +133,12 @@ public class MoviesService {
         }
     }
 
-    private static void applySort(StringBuilder sparqlQueryBuilder, String sortOrder, String sortBy) {
+    private void applySort(StringBuilder sparqlQueryBuilder, String sortOrder, String sortBy) {
         sparqlQueryBuilder.append("} " + "GROUP BY ?movieName ?releaseYear ?description ?genre ?movieUrl ")
-                          .append(
-                                  // Group by movie details, including URL
-                                  String.format("ORDER BY %s(?%s)", sortOrder, sortBy));
+                          .append(String.format("ORDER BY %s(?%s)", sortOrder, sortBy));
     }
 
-    private static void applyActorsFilter(List<String> actorsThatPlay, StringBuilder sparqlQueryBuilder) {
+    private void applyActorsFilter(List<String> actorsThatPlay, StringBuilder sparqlQueryBuilder) {
         for (String actor : actorsThatPlay) {
             sparqlQueryBuilder.append(
                     String.format("  ?movie schema:actor ?actor_%s . " +  // Ensure the actor plays in the movie
@@ -149,7 +147,7 @@ public class MoviesService {
         }
     }
 
-    private static void applyYearFilter(boolean onlyThisYear, StringBuilder sparqlQueryBuilder, String currentYear) {
+    private void applyYearFilter(boolean onlyThisYear, StringBuilder sparqlQueryBuilder, String currentYear) {
         if (onlyThisYear) {
             sparqlQueryBuilder.append(String.format("  FILTER(?releaseYear = \"%s\") ", currentYear));
         }
