@@ -41,14 +41,21 @@ public class MoviesService {
     private static final String SPACES = "\\+";
     private static final String UNDERSCORE = "_";
     private static final String COLON = ", ";
+    private static final String NETFLIX_URL = "https://www.netflix.com/ro/browse/genre/34399";
+    private static final String ACTORS_ELEMENT = "span.title-data-info-item-list";
+    private static final String MOVIE_TITLE_ELEMENT = ".title-title";
+    private static final String MOVIE_DESCRIPTION_ELEMENT = ".title-info-synopsis";
+    private static final String MOVIE_GENRE_ELEMENT = ".item-genre";
+    private static final String MOVIE_YEAR_ELEMENT = ".item-year";
+    private static final String MOVIE_RATING_ELEMENT = ".title-info-metadata-item-rating";
     private final Map<String, String> moviesImages = new HashMap<>();
     private final Map<String, String> moviesRdfTurtles = new HashMap<>();
 
-    public Model createRdfModelByWebURL(String url, Integer maximumMovies) throws IOException {
+    public Model createRdfModelByWebURL(Integer maximumMovies) throws IOException {
 
         Model model = ModelFactory.createDefaultModel();
 
-        extractMoviesFromNetflixURL(fetchHtmlFromUrl(url), model, maximumMovies);
+        extractMoviesFromNetflixURL(fetchHtmlFromUrl(NETFLIX_URL), model, maximumMovies);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             RDFDataMgr.write(outputStream, model, RDFFormat.TURTLE);
@@ -60,53 +67,41 @@ public class MoviesService {
 
     public List<Movie> getMoviesWithActors(Model model, String sortingDetails, boolean isAscending,
                                            boolean onlyThisYear, List<String> actorsThatPlay) {
+
         List<Movie> movies = new ArrayList<>();
         String currentYear = String.valueOf(Year.now()
                                                 .getValue());
         String sortBy = currentYear.equalsIgnoreCase(sortingDetails) ? "releaseYear" : "movieName";
         String sortOrder = isAscending ? "ASC" : "DESC";
 
-        // Start building the SPARQL query
+        StringBuilder sparqlQueryBuilder = createBaseQuery();
+
+        applyYearFilter(onlyThisYear, sparqlQueryBuilder, currentYear);
+        if (actorsThatPlay != null && !actorsThatPlay.isEmpty()) {
+            applyActorsFilter(actorsThatPlay, sparqlQueryBuilder);
+        }
+        applySort(sparqlQueryBuilder, sortOrder, sortBy);
+        String sparqlQueryString = sparqlQueryBuilder.toString();
+        Query query = QueryFactory.create(sparqlQueryString);
+        executeQuery(model, query, movies);
+
+        return movies;
+    }
+
+    private static StringBuilder createBaseQuery() {
         StringBuilder sparqlQueryBuilder = new StringBuilder();
         sparqlQueryBuilder.append(
                 "PREFIX schema: <http://schema.org/> " + "PREFIX foaf: <http://xmlns.com/foaf/0.1/> " +
                 "SELECT ?movieName ?releaseYear ?description ?genre ?movieUrl (GROUP_CONCAT(DISTINCT ?actorName; " +
                 "SEPARATOR=\", \") AS ?actors) " +
-                // Included movieUrl
                 "WHERE { " + "  ?movie a schema:Movie ; " + "         schema:name ?movieName ; " +
                 "         schema:datePublished ?releaseYear ; " + "         schema:description ?description ; " +
                 "         schema:genre ?genre ; " + "         schema:url ?movieUrl . " +
-                // Fetch the movie URL from RDF model
                 "  OPTIONAL { " + "    ?movie schema:actor ?actor . " + "    ?actor foaf:name ?actorName . " + "  } ");
+        return sparqlQueryBuilder;
+    }
 
-        // Apply the filter for onlyThisYear
-        if (onlyThisYear) {
-            sparqlQueryBuilder.append(String.format("  FILTER(?releaseYear = \"%s\") ", currentYear));
-        }
-
-        // Apply the filter for actorsThatPlay if the list is not empty
-        if (actorsThatPlay != null && !actorsThatPlay.isEmpty()) {
-            for (String actor : actorsThatPlay) {
-                sparqlQueryBuilder.append(
-                        String.format("  ?movie schema:actor ?actor_%s . " +  // Ensure the actor plays in the movie
-                                      "  ?actor_%s foaf:name \"%s\" . ",  // Actor name matches the provided actor
-                                actor.replaceAll("\\s", UNDERSCORE), actor.replaceAll("\\s", UNDERSCORE), actor));
-            }
-        }
-
-        // Sort by the given parameter
-        sparqlQueryBuilder.append("} " + "GROUP BY ?movieName ?releaseYear ?description ?genre ?movieUrl ")
-                          .append(
-                                  // Group by movie details, including URL
-                                  String.format("ORDER BY %s(?%s)", sortOrder, sortBy));
-
-        // Convert the StringBuilder to a string
-        String sparqlQueryString = sparqlQueryBuilder.toString();
-
-        // Create a query object
-        Query query = QueryFactory.create(sparqlQueryString);
-
-        // Execute the query on the model
+    private void executeQuery(Model model, Query query, List<Movie> movies) {
         try (QueryExecution execution = QueryExecutionFactory.create(query, model)) {
             ResultSet results = execution.execSelect();
             while (results.hasNext()) {
@@ -136,12 +131,32 @@ public class MoviesService {
                 movies.add(movie);
             }
         }
+    }
 
-        return movies;
+    private static void applySort(StringBuilder sparqlQueryBuilder, String sortOrder, String sortBy) {
+        sparqlQueryBuilder.append("} " + "GROUP BY ?movieName ?releaseYear ?description ?genre ?movieUrl ")
+                          .append(
+                                  // Group by movie details, including URL
+                                  String.format("ORDER BY %s(?%s)", sortOrder, sortBy));
+    }
+
+    private static void applyActorsFilter(List<String> actorsThatPlay, StringBuilder sparqlQueryBuilder) {
+        for (String actor : actorsThatPlay) {
+            sparqlQueryBuilder.append(
+                    String.format("  ?movie schema:actor ?actor_%s . " +  // Ensure the actor plays in the movie
+                                  "  ?actor_%s foaf:name \"%s\" . ",  // Actor name matches the provided actor
+                            actor.replaceAll("\\s", UNDERSCORE), actor.replaceAll("\\s", UNDERSCORE), actor));
+        }
+    }
+
+    private static void applyYearFilter(boolean onlyThisYear, StringBuilder sparqlQueryBuilder, String currentYear) {
+        if (onlyThisYear) {
+            sparqlQueryBuilder.append(String.format("  FILTER(?releaseYear = \"%s\") ", currentYear));
+        }
     }
 
     private void extractActorsText(Document document, Model movieModel, Resource movieResource) {
-        String actorsText = document.select("span.title-data-info-item-list")
+        String actorsText = document.select(ACTORS_ELEMENT)
                                     .text();
         if (!actorsText.isEmpty()) {
             String[] actorNames = actorsText.split(COLON);
@@ -164,15 +179,15 @@ public class MoviesService {
             throws IOException {
         Document document = fetchHtmlFromUrl(movieUrl);
         Model movieModel = ModelFactory.createDefaultModel();
-        String movieName = document.select(".title-title")
+        String movieName = document.select(MOVIE_TITLE_ELEMENT)
                                    .text();
-        String description = document.select(".title-info-synopsis")
+        String description = document.select(MOVIE_DESCRIPTION_ELEMENT)
                                      .text();
-        String genre = document.select(".item-genre")
+        String genre = document.select(MOVIE_GENRE_ELEMENT)
                                .text();
-        String releaseYear = document.select(".item-year")
+        String releaseYear = document.select(MOVIE_YEAR_ELEMENT)
                                      .text();
-        String rating = document.select(".title-info-metadata-item-rating")
+        String rating = document.select(MOVIE_RATING_ELEMENT)
                                 .text();
 
         moviesImages.put(movieName, imgSrc);

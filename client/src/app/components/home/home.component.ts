@@ -1,6 +1,4 @@
 import {Component, OnInit} from '@angular/core';
-import {UserService} from '../../services/user.service';
-import {UserDto} from '../../dtos/user.dto';
 import {ActorDto} from 'src/app/dtos/actor.dto';
 import {FilterAndSortEventsInfo} from 'src/app/dtos/filter-sort-events-info.dto';
 import {MovieDto} from 'src/app/dtos/movie.dto';
@@ -14,7 +12,6 @@ import {MatDialog} from '@angular/material/dialog';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  user!: UserDto;
   movies: MovieDto[] = [];
   actors: ActorDto[] = [];
   selectedActors: ActorDto[] = [];
@@ -23,32 +20,24 @@ export class HomeComponent implements OnInit {
   applyingFilters: boolean = false;
   showFilters: boolean = false;
 
-  constructor(private userService: UserService, private moviesService: MoviesService, private dialog: MatDialog) {
+  constructor(private moviesService: MoviesService, private dialog: MatDialog) {
   }
 
   ngOnInit(): void {
     this.isPageLoading = true;
-    this.moviesService.init("https://www.netflix.com/ro/browse/genre/34399", 12).subscribe({
-      next: () => {
-        this.isPageLoading = false;
-        this.sortAndFilterInfo.isAscendantOrder = true;
-        this.sortAndFilterInfo.onlyNewMovies = false;
-        this.sortAndFilterInfo.actors = [];
-        this.sortAndFilterInfo.sortType = "year";
-        this.moviesService.getMovies(this.sortAndFilterInfo).subscribe({
-          next: data => {
-            this.movies = data;
-            this.showFilters = true;
-            this.selectedActors = [];
-            this.actors = this.extractUniqueActors(data.map(movie => movie.actors).flat());
-          },
-          error: err => {
-            this.isPageLoading = false;
-          }
-        });
+    this.sortAndFilterInfo.isAscendantOrder = true;
+    this.sortAndFilterInfo.onlyNewMovies = false;
+    this.sortAndFilterInfo.actors = [];
+    this.sortAndFilterInfo.sortType = "year";
+    this.moviesService.getMovies(this.sortAndFilterInfo, 12).subscribe({
+      next: data => {
+        this.isPageLoading = false
+        this.movies = data;
+        this.showFilters = true;
+        this.selectedActors = [];
+        this.actors = this.extractUniqueActors(data.map(movie => movie.actors).flat());
       },
-      error: err => {
-        console.log(err);
+      error: () => {
         this.isPageLoading = false;
       }
     });
@@ -72,7 +61,7 @@ export class HomeComponent implements OnInit {
     this.movies = [];
     this.sortAndFilterInfo.actors = this.selectedActors.map(act => act.name);
 
-    this.moviesService.getMovies(this.sortAndFilterInfo)
+    this.moviesService.getMovies(this.sortAndFilterInfo, 12)
       .subscribe({
         next: movies => {
           this.movies = movies;
